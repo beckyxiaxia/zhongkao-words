@@ -79,7 +79,7 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   position: relative;
-  padding-bottom: 20px;
+  padding-bottom: 130px;
   overflow-y: auto;
 }
 
@@ -396,8 +396,11 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
   .word-card .word-en { font-size: 26px; }
   .welcome h1 { font-size: 28px; }
   .ep-card { width: 130px; padding: 14px 10px; }
-  .controls { gap: 6px; padding: 12px 8px 18px; }
-  .ctrl-btn { padding: 6px 10px; font-size: 12px; }
+  .controls { gap: 4px 6px; padding: 8px 6px 14px; }
+  .controls .episode-select { display: none; }
+  .ctrl-btn { padding: 6px 10px; font-size: 13px; }
+  .ctrl-btn .btn-label { display: none; }
+  .ctrl-btn .btn-icon { font-size: 16px; }
   .review-grid { grid-template-columns: 1fr; }
   .review-grid-ext { grid-template-columns: 1fr 1fr; }
 }
@@ -899,12 +902,12 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
 
 <div class="controls" id="controls">
   <select class="episode-select" id="episodeSelect"></select>
-  <button class="ctrl-btn" id="btnPrev">⏮ 上一步</button>
-  <button class="ctrl-btn primary" id="btnPlayPause">▶ 自动播放</button>
-  <button class="ctrl-btn" id="btnNext">下一步 ⏭</button>
-  <button class="ctrl-btn narrate-btn" id="btnNarrate" title="双击重播">🎙 朗读</button>
+  <button class="ctrl-btn" id="btnPrev"><span class="btn-icon">⏮</span><span class="btn-label"> 上一步</span></button>
+  <button class="ctrl-btn primary" id="btnPlayPause"><span class="btn-icon">▶</span><span class="btn-label"> 自动播放</span></button>
+  <button class="ctrl-btn" id="btnNext"><span class="btn-label">下一步 </span><span class="btn-icon">⏭</span></button>
+  <button class="ctrl-btn narrate-btn" id="btnNarrate" title="双击重播"><span class="btn-icon">🎙</span><span class="btn-label"> 朗读</span></button>
   <button class="ctrl-btn lang-toggle" id="btnLang">中/EN</button>
-  <button class="ctrl-btn hide-toggle" id="btnHideEn">👁 隐藏英文</button>
+  <button class="ctrl-btn hide-toggle" id="btnHideEn"><span class="btn-icon">👁</span><span class="btn-label"> 隐藏英文</span></button>
 </div>
 
 <div id="printZone"></div>
@@ -5115,7 +5118,7 @@ function init() {
   hideEnMode = savedData.preferences.hideEn || false;
   if (hideEnMode) {
     btnHideEn.classList.add('active');
-    btnHideEn.textContent = '👁 显示英文';
+    btnHideEn.innerHTML = '<span class="btn-icon">👁</span><span class="btn-label"> 显示英文</span>';
   }
   showWelcome();
   bindEvents();
@@ -5678,7 +5681,7 @@ function handleWordClick(span, text, wordData) {
 function toggleHideEn() {
   hideEnMode = !hideEnMode;
   btnHideEn.classList.toggle('active', hideEnMode);
-  btnHideEn.textContent = hideEnMode ? '👁 显示英文' : '👁 隐藏英文';
+  btnHideEn.innerHTML = hideEnMode ? '<span class="btn-icon">👁</span><span class="btn-label"> 显示英文</span>' : '<span class="btn-icon">👁</span><span class="btn-label"> 隐藏英文</span>';
   savePreferences(currentLang, hideEnMode);
   // Apply to current scene card if exists
   const sceneCard = stage.querySelector('.scene-card');
@@ -6141,7 +6144,7 @@ function toggleAutoPlay() { isAutoPlaying ? stopAutoPlay() : startAutoPlay(); }
 function startAutoPlay() {
   isAutoPlaying = true;
   autoBadge.classList.add('show');
-  btnPlayPause.textContent = '⏸ 暂停';
+  btnPlayPause.innerHTML = '<span class="btn-icon">⏸</span><span class="btn-label"> 暂停</span>';
   if (currentEpisode === -1) startEpisode(0);
   scheduleNext();
 }
@@ -6149,7 +6152,7 @@ function startAutoPlay() {
 function stopAutoPlay() {
   isAutoPlaying = false;
   autoBadge.classList.remove('show');
-  btnPlayPause.textContent = '▶ 自动播放';
+  btnPlayPause.innerHTML = '<span class="btn-icon">▶</span><span class="btn-label"> 自动播放</span>';
   if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
   clearTypewriter();
 }
@@ -6516,13 +6519,13 @@ function toggleNarration() {
 function updateNarrateButton() {
   btnNarrate.classList.remove('playing', 'paused');
   if (narratorState.playing && !narratorState.paused) {
-    btnNarrate.textContent = '🎙 暂停';
+    btnNarrate.innerHTML = '<span class="btn-icon">🎙</span><span class="btn-label"> 暂停</span>';
     btnNarrate.classList.add('playing');
   } else if (narratorState.playing && narratorState.paused) {
-    btnNarrate.textContent = '🎙 继续';
+    btnNarrate.innerHTML = '<span class="btn-icon">🎙</span><span class="btn-label"> 继续</span>';
     btnNarrate.classList.add('paused');
   } else {
-    btnNarrate.textContent = '🎙 朗读';
+    btnNarrate.innerHTML = '<span class="btn-icon">🎙</span><span class="btn-label"> 朗读</span>';
   }
 }
 

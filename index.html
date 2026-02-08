@@ -6107,7 +6107,7 @@ function launchConfetti() {
 //  NAVIGATION
 // ============================================================
 function nextStep() {
-  if (currentEpisode === -1) { startEpisode(0); return; }
+  if (currentEpisode === -1) return; // Welcome页不自动跳转
   const ep = episodes[currentEpisode];
   const total = getStepCount(ep);
   // Block advancing during an active quiz (user must finish it)

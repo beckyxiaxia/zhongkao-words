@@ -706,6 +706,61 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
 .review-summary .rs-stats { font-size: 16px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.8; }
 .review-summary .rs-stats strong { color: var(--accent-green); }
 
+/* === Paywall / Unlock === */
+.paywall-overlay {
+  text-align: center; padding: 40px 20px;
+  animation: fadeInUp 0.5s both;
+}
+.paywall-overlay .pw-emoji { font-size: 64px; display: block; margin-bottom: 16px; }
+.paywall-overlay .pw-title {
+  font-size: 28px; font-weight: 900; margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.paywall-overlay .pw-desc { font-size: 15px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.8; }
+.paywall-overlay .pw-input-row { display: flex; gap: 10px; max-width: 400px; margin: 0 auto 16px; }
+.paywall-overlay .pw-input {
+  flex: 1; padding: 12px 16px; background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12); border-radius: 12px;
+  font-size: 18px; color: var(--text-primary); font-family: monospace;
+  text-align: center; letter-spacing: 3px; outline: none;
+}
+.paywall-overlay .pw-input:focus { border-color: var(--accent-yellow); }
+.paywall-overlay .pw-submit {
+  padding: 12px 24px; background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
+  border: none; border-radius: 12px; font-size: 16px; font-weight: 700;
+  color: #1a1a2e; cursor: pointer; font-family: inherit;
+}
+.paywall-overlay .pw-submit:hover { box-shadow: 0 0 20px rgba(255,165,2,0.4); }
+.paywall-overlay .pw-error { color: #ff8a8a; font-size: 14px; margin-top: 8px; min-height: 20px; }
+.paywall-overlay .pw-share-btn {
+  display: inline-block; margin-top: 16px; padding: 14px 32px;
+  background: linear-gradient(135deg, var(--accent-green), #2ed573);
+  border: none; border-radius: 14px; font-size: 17px; font-weight: 700;
+  color: #1a1a2e; cursor: pointer; font-family: inherit;
+}
+.paywall-overlay .pw-share-btn:hover { box-shadow: 0 0 20px rgba(123,237,159,0.4); }
+.paywall-overlay .pw-or { color: var(--text-secondary); font-size: 14px; margin: 16px 0; }
+.paywall-overlay .pw-price {
+  font-size: 36px; font-weight: 900; color: var(--accent-yellow);
+  margin-bottom: 4px;
+}
+.paywall-overlay .pw-price-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+.pw-qr-section { margin-top: 20px; }
+.pw-qr-section img { width: 160px; height: 160px; border-radius: 12px; margin-bottom: 8px; }
+.pw-qr-label { font-size: 13px; color: var(--text-secondary); display: block; }
+.ep-card .lock-badge {
+  position: absolute; top: 8px; right: 8px; font-size: 18px;
+  background: rgba(255,165,2,0.2); border-radius: 50%; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ep-card .share-unlock-badge {
+  position: absolute; top: 8px; right: 8px; font-size: 12px;
+  background: rgba(123,237,159,0.15); color: var(--accent-green);
+  border-radius: 10px; padding: 2px 8px; font-weight: 700;
+}
+
 /* === Print Zone === */
 #printZone { display: none; }
 
@@ -859,6 +914,93 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
 //  LOCALSTORAGE PERSISTENCE
 // ============================================================
 const STORAGE_KEY = 'zhongkao-words-data';
+const UNLOCK_KEY = 'zhongkao-words-unlock';
+const FREE_EPISODES = 5; // 前5集免费
+
+// ============================================================
+//  ACTIVATION CODE SYSTEM
+// ============================================================
+// 激活码生成规则: 前缀ZK + 8位字母数字 + 校验位
+// 你可以在这里添加有效的激活码，也可以用算法验证
+const VALID_CODES = new Set([
+  'ZK-ABCD-1234', 'ZK-EFGH-5678', 'ZK-WXYZ-9012',
+  'ZK-FREE-2026', 'ZK-TEST-8888',
+  // ↑ 在这里添加更多激活码，每卖出一个就加一个
+]);
+
+// 算法验证: 任何符合 ZK-XXXX-XXXX 格式且数字之和能被7整除的码也有效
+function isValidCode(code) {
+  code = code.trim().toUpperCase();
+  if (VALID_CODES.has(code)) return true;
+  // 算法码: ZK-开头，格式 ZK-XXXX-XXXX
+  const m = code.match(/^ZK-([A-Z0-9]{4})-([A-Z0-9]{4})$/);
+  if (!m) return false;
+  const digits = code.replace(/[^0-9]/g, '');
+  if (digits.length < 2) return false;
+  const sum = digits.split('').reduce((s, d) => s + parseInt(d), 0);
+  return sum % 7 === 0;
+}
+
+function getUnlockData() {
+  try {
+    const raw = localStorage.getItem(UNLOCK_KEY);
+    if (!raw) return { unlocked: false, shareUnlocks: [] };
+    return JSON.parse(raw);
+  } catch { return { unlocked: false, shareUnlocks: [] }; }
+}
+
+function saveUnlockData(data) {
+  try { localStorage.setItem(UNLOCK_KEY, JSON.stringify(data)); } catch {}
+}
+
+function isEpisodeUnlocked(epIndex) {
+  if (epIndex < FREE_EPISODES) return true; // 前5集免费
+  const data = getUnlockData();
+  if (data.unlocked) return true; // 全部解锁
+  if (data.shareUnlocks && data.shareUnlocks.includes(epIndex)) return true; // 转发解锁
+  return false;
+}
+
+function activateCode(code) {
+  if (isValidCode(code)) {
+    const data = getUnlockData();
+    data.unlocked = true;
+    data.code = code;
+    data.activatedAt = new Date().toISOString();
+    saveUnlockData(data);
+    return true;
+  }
+  return false;
+}
+
+function shareUnlockEpisode(epIndex) {
+  const data = getUnlockData();
+  if (!data.shareUnlocks) data.shareUnlocks = [];
+  if (!data.shareUnlocks.includes(epIndex)) {
+    data.shareUnlocks.push(epIndex);
+    saveUnlockData(data);
+  }
+}
+
+// 生成分享链接
+function getShareUrl(epIndex) {
+  const base = window.location.href.split('?')[0].split('#')[0];
+  return `${base}?share=1&ep=${epIndex + 1}`;
+}
+
+// 检查URL是否为分享链接
+function checkShareUnlock() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('share') === '1') {
+    const ep = parseInt(params.get('ep'));
+    if (ep && ep > FREE_EPISODES && ep <= 20) {
+      // 分享者获得该集解锁（通过cookie/localStorage标记）
+      // 但被分享的人只能看免费集
+    }
+    // 清除URL参数
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+}
 
 function getDefaultData() {
   return {
@@ -4965,9 +5107,9 @@ const btnNarrate = document.getElementById('btnNarrate');
 //  INIT
 // ============================================================
 function init() {
+  checkShareUnlock();
   createParticles();
   populateEpisodeSelect();
-  // Restore preferences from localStorage
   const savedData = loadData();
   currentLang = savedData.preferences.lang || 'zh';
   hideEnMode = savedData.preferences.hideEn || false;
@@ -5210,9 +5352,18 @@ function showWelcome() {
       <div class="episode-cards">
         ${episodes.map(ep => {
           const epData = data.episodes[ep.id];
+          const locked = !isEpisodeUnlocked(ep.id - 1);
           let statusClass = 'status-new', statusText = '未学习';
           let cardClass = '';
           let bestScoreHtml = '';
+          let lockHtml = '';
+          if (locked) {
+            lockHtml = `<div class="lock-badge">🔒</div>`;
+          }
+          const unlockData = getUnlockData();
+          if (!locked && !unlockData.unlocked && ep.id - 1 >= FREE_EPISODES && unlockData.shareUnlocks && unlockData.shareUnlocks.includes(ep.id - 1)) {
+            lockHtml = `<div class="share-unlock-badge">分享解锁</div>`;
+          }
           if (epData) {
             if (epData.completed) {
               statusClass = 'status-done'; statusText = '已完成';
@@ -5226,13 +5377,14 @@ function showWelcome() {
             }
           }
           return `
-          <div class="ep-card ${cardClass}" onclick="startEpisode(${ep.id-1})">
+          <div class="ep-card ${cardClass}" onclick="startEpisode(${ep.id-1})" style="position:relative${locked ? ';opacity:0.7' : ''}">
+            ${lockHtml}
             <div class="ep-emoji">${ep.emoji}</div>
             <div class="ep-title">第${ep.id}集</div>
             <div class="ep-title">${ep.title}</div>
             <div class="ep-desc">${ep.category}<br>${ep.words.length}个重点词</div>
             ${getIpTag(ep.id)}
-            <div class="ep-status ${statusClass}">${statusText}</div>
+            <div class="ep-status ${statusClass}">${locked ? '🔒 需解锁' : statusText}</div>
             ${bestScoreHtml}
           </div>
         `}).join('')}
@@ -5247,18 +5399,110 @@ function showWelcome() {
 function getStepCount(ep) { return 1 + ep.scenes.length * 3 + 1; }
 
 function startEpisode(index) {
+  // Check if episode is locked
+  if (!isEpisodeUnlocked(index)) {
+    showPaywall(index);
+    return;
+  }
   document.body.classList.remove('welcome-mode');
   stopAutoPlay();
   currentEpisode = index;
   currentStep = 0;
   episodeSelect.value = index;
   langBadge.style.display = '';
-  // Reset quiz state for this episode
   quizState = {
     questions: [], currentQ: 0,
     sceneScores: {}, episodeScore: 0, episodeTotal: 0, wrongWords: []
   };
   renderCurrentStep();
+}
+
+function showPaywall(index) {
+  document.body.classList.remove('welcome-mode');
+  document.body.classList.add('welcome-mode');
+  const ep = episodes[index];
+  const shareUrl = getShareUrl(index);
+  stage.innerHTML = `
+    <div class="paywall-overlay">
+      <div class="pw-emoji">🔒</div>
+      <div class="pw-title">第${ep.id}集需要解锁</div>
+      <div class="pw-desc">
+        前${FREE_EPISODES}集免费体验，解锁全部20集畅学500+单词<br>
+        IP角色故事 + 艾宾浩斯复习 = 轻松记住中考词汇
+      </div>
+      <div class="pw-price">¥29.9</div>
+      <div class="pw-price-sub">一次购买 · 永久使用 · 持续更新</div>
+      <div class="pw-input-row">
+        <input class="pw-input" id="codeInput" placeholder="输入激活码" maxlength="14">
+        <button class="pw-submit" onclick="tryActivate()">激活</button>
+      </div>
+      <div class="pw-error" id="codeError"></div>
+      <div class="pw-or">— 或者 —</div>
+      <button class="pw-share-btn" onclick="shareToUnlock(${index})">
+        📢 分享给好友，免费解锁本集
+      </button>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+        分享到微信/朋友圈后即可免费学习本集
+      </div>
+      <div style="margin-top:24px;">
+        <button class="btn-secondary" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 28px;font-size:14px;color:var(--text-primary);cursor:pointer;font-family:inherit;" onclick="showWelcome()">← 返回首页</button>
+      </div>
+    </div>
+  `;
+}
+
+function tryActivate() {
+  const input = document.getElementById('codeInput');
+  const error = document.getElementById('codeError');
+  const code = input.value.trim();
+  if (!code) { error.textContent = '请输入激活码'; return; }
+  if (activateCode(code)) {
+    error.style.color = 'var(--accent-green)';
+    error.textContent = '✅ 激活成功！正在跳转...';
+    setTimeout(() => showWelcome(), 1000);
+  } else {
+    error.style.color = '#ff8a8a';
+    error.textContent = '❌ 激活码无效，请检查后重试';
+    input.style.borderColor = '#ff8a8a';
+    setTimeout(() => { input.style.borderColor = ''; }, 2000);
+  }
+}
+
+function shareToUnlock(index) {
+  const ep = episodes[index];
+  const shareUrl = getShareUrl(index);
+  const shareText = `我在用"中考单词趣味记忆"学英语！${ep.emoji} 第${ep.id}集：${ep.title}，疯狂动物城×三丽鸥×原神角色陪你学500+中考词汇！免费体验 👉 ${shareUrl}`;
+
+  // Try Web Share API first (works on mobile)
+  if (navigator.share) {
+    navigator.share({
+      title: '中考单词趣味记忆 - ' + ep.title,
+      text: shareText,
+      url: shareUrl
+    }).then(() => {
+      shareUnlockEpisode(index);
+      alert('🎉 分享成功！本集已解锁！');
+      startEpisode(index);
+    }).catch(() => {});
+  } else {
+    // Desktop fallback: copy to clipboard
+    navigator.clipboard.writeText(shareText).then(() => {
+      shareUnlockEpisode(index);
+      alert('📋 分享内容已复制到剪贴板！\n\n请粘贴发送到微信/朋友圈，本集已解锁！');
+      startEpisode(index);
+    }).catch(() => {
+      // Last fallback
+      const ta = document.createElement('textarea');
+      ta.value = shareText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      shareUnlockEpisode(index);
+      alert('📋 分享内容已复制！请粘贴到微信发送，本集已解锁！');
+      startEpisode(index);
+    });
+  }
 }
 
 function renderCurrentStep() {

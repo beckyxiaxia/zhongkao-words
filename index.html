@@ -5191,29 +5191,26 @@ function bindTouchEvents() {
   let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
   const el = document.getElementById('stage');
   el.addEventListener('touchstart', e => {
+    if (currentEpisode === -1) return; // Welcome页不处理滑动
     const tag = e.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON') return;
     touchStartX = e.changedTouches[0].clientX;
     touchStartY = e.changedTouches[0].clientY;
     touchStartTime = Date.now();
   }, { passive: true });
   el.addEventListener('touchend', e => {
+    if (currentEpisode === -1) return; // Welcome页不处理滑动
     const tag = e.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON') return;
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - touchStartY;
     const dt = Date.now() - touchStartTime;
     if (dt > 500) return;
     const absDx = Math.abs(dx), absDy = Math.abs(dy);
-    if (absDx < 50 && absDy < 50) return;
-    if (absDx > absDy) {
-      // Horizontal swipe
-      if (dx < -50) nextStep();
-      else if (dx > 50) prevStep();
-    } else {
-      // Vertical swipe
-      if (dy < -50) nextStep();
-      else if (dy > 50) prevStep();
+    if (absDx < 80) return; // 只响应水平滑动且阈值提高到80px
+    if (absDx > absDy * 2) { // 水平位移必须是垂直的2倍以上，避免误触
+      if (dx < 0) nextStep();
+      else prevStep();
     }
   }, { passive: true });
 }

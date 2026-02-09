@@ -851,6 +851,15 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
   box-shadow: 0 0 24px rgba(0,240,255,0.3);
 }
 
+/* === Toast Notification === */
+.toast-msg {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  z-index: 9999; background: rgba(255,80,80,0.9); color: #fff;
+  padding: 10px 24px; border-radius: 12px; font-size: 14px; font-weight: 700;
+  opacity: 0; transition: opacity 0.3s; pointer-events: none;
+}
+.toast-msg.show { opacity: 1; }
+
 /* === Tutorial Overlay === */
 .tutorial-overlay {
   position: fixed; inset: 0; z-index: 10000;
@@ -998,6 +1007,7 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
   <button class="ctrl-btn hide-toggle" id="btnHideEn"><span class="btn-icon">👁</span><span class="btn-label"> 隐藏英文</span></button>
 </div>
 
+<div class="toast-msg" id="toastMsg"></div>
 <div class="tutorial-overlay" id="tutorialOverlay">
   <div class="tutorial-card">
     <h2>欢迎来到背背FUN!</h2>
@@ -1007,16 +1017,20 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
         <span class="tip-text">点击故事中的<b>高亮英文单词</b>，可以听到发音</span>
       </div>
       <div class="tutorial-tip">
+        <span class="tip-icon">🌐</span>
+        <span class="tip-text">点击底部 <b>地球按钮</b> 切换全英文版本，配合朗读练听力</span>
+      </div>
+      <div class="tutorial-tip">
         <span class="tip-icon">👁</span>
-        <span class="tip-text">点击底部 <b>眼睛按钮</b> 可以隐藏英文单词，测试自己的记忆</span>
+        <span class="tip-text">点击底部 <b>眼睛按钮</b> 隐藏英文单词，测试记忆</span>
       </div>
       <div class="tutorial-tip">
         <span class="tip-icon">🎙</span>
-        <span class="tip-text">点击底部 <b>麦克风按钮</b> 可以朗读整篇文章</span>
+        <span class="tip-text">点击底部 <b>麦克风按钮</b> 朗读整篇文章（英文版可全英文朗读）</span>
       </div>
       <div class="tutorial-tip">
-        <span class="tip-icon">👈👉</span>
-        <span class="tip-text">点击 <b>上一步/下一步</b> 或左右滑动翻页</span>
+        <span class="tip-icon">📝</span>
+        <span class="tip-text">每个场景有<b>3道测验题</b>，答完才能进入下一步</span>
       </div>
     </div>
     <button class="tutorial-btn" onclick="closeTutorial()">知道了，开始学习!</button>
@@ -5222,6 +5236,13 @@ const btnNarrate = document.getElementById('btnNarrate');
 // ============================================================
 //  INIT
 // ============================================================
+function showToast(msg) {
+  const el = document.getElementById('toastMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
 function showTutorial() {
   const overlay = document.getElementById('tutorialOverlay');
   overlay.classList.add('show');
@@ -6248,7 +6269,10 @@ function nextStep() {
   // Block advancing during an active quiz (user must finish it)
   if (currentStep > 0 && currentStep < total - 1) {
     const inner = currentStep - 1;
-    if (inner % 3 === 2 && quizState.questions.length > 0 && quizState.currentQ < quizState.questions.length) return;
+    if (inner % 3 === 2 && quizState.questions.length > 0 && quizState.currentQ < quizState.questions.length) {
+      showToast('请先完成测验再继续');
+      return;
+    }
   }
   // Stop narration when manually advancing
   if (narratorState.playing) stopNarration();

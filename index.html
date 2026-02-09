@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中考单词趣味记忆 - IP角色×趣味故事×艾宾浩斯复习</title>
-<meta name="description" content="20集IP故事带你轻松记住500+中考英语单词！疯狂动物城、三丽鸥、Chiikawa、原神角色陪你学，艾宾浩斯复习系统帮你记牢。">
+<title>背背FUN - 追剧式背中考单词 | 3个月搞定中学英语词汇</title>
+<meta name="description" content="66集IP故事带你轻松记住全部中考英语单词！动物城、三丽鸥、Chiikawa、原神角色陪你学，艾宾浩斯复习系统帮你记牢。">
 <!-- Open Graph / 微信分享卡片 -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="中考单词趣味记忆 - 500词轻松搞定">
-<meta property="og:description" content="疯狂动物城×三丽鸥×Chiikawa×原神 — 20集趣味故事+艾宾浩斯复习，中考英语单词不再难！">
+<meta property="og:title" content="背背FUN - 追剧式背中考单词">
+<meta property="og:description" content="动物城×三丽鸥×Chiikawa×原神 — 66集趣味故事+艾宾浩斯复习，3个月搞定中考英语词汇！">
 <meta property="og:image" content="https://img.icons8.com/emoji/512/fox.png">
 <!-- 移动端优化 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1047,7 +1047,7 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
 // ============================================================
 const STORAGE_KEY = 'zhongkao-words-data';
 const UNLOCK_KEY = 'zhongkao-words-unlock';
-const FREE_EPISODES = 5; // 前5集免费
+const FREE_EPISODES = 999; // 全部免费
 
 // ============================================================
 //  ACTIVATION CODE SYSTEM
@@ -5251,7 +5251,7 @@ function showTutorial() {
 function closeTutorial() {
   const overlay = document.getElementById('tutorialOverlay');
   overlay.classList.remove('show');
-  try { localStorage.setItem('bbfun-tutorial-done', '1'); } catch (e) {}
+  // tutorial shows every episode start
 }
 
 function init() {
@@ -5268,10 +5268,7 @@ function init() {
   showWelcome();
   bindEvents();
   updateLangBadge();
-  // Show tutorial for first-time users
-  try {
-    if (!localStorage.getItem('bbfun-tutorial-done')) showTutorial();
-  } catch (e) {}
+  // tutorial now shows on each episode start, not here
 }
 
 function createParticles() {
@@ -5444,8 +5441,8 @@ function showWelcome() {
   stage.innerHTML = `
     <div class="welcome">
       <div class="emoji-row">🦊🐰🧨</div>
-      <h1>中考单词趣味记忆</h1>
-      <p class="welcome-sub">IP角色 × 趣味故事 × 艾宾浩斯复习</p>
+      <h1>背背FUN</h1>
+      <p class="welcome-sub">追剧式背中考单词 · 3个月搞定中学英语词汇</p>
       <div class="welcome-stats">
         <div class="welcome-stat">
           <div class="stat-value">${stats.totalScore}</div>
@@ -5474,15 +5471,9 @@ function showWelcome() {
         <div class="search-results" id="searchResults"></div>
       </div>
       <div class="welcome-print-btns">
-        ${getUnlockData().unlocked ? `
         <button onclick="printAllStories()">🖨️ 打印全部文章</button>
         <button onclick="printBilingualStories()">🌐 打印中英双语</button>
         <button onclick="printVocabList()">📋 打印词汇表</button>
-        ` : `
-        <button onclick="showPaywall(FREE_EPISODES)" style="opacity:0.5;">🔒 打印全部文章</button>
-        <button onclick="showPaywall(FREE_EPISODES)" style="opacity:0.5;">🔒 打印中英双语</button>
-        <button onclick="showPaywall(FREE_EPISODES)" style="opacity:0.5;">🔒 打印词汇表</button>
-        `}
       </div>
       <div class="review-entry-cards">
         <div class="review-entry-card${dueCount === 0 ? ' disabled' : ''}" onclick="${dueCount > 0 ? 'startReviewMode(\'due\')' : ''}">
@@ -5544,6 +5535,18 @@ function showWelcome() {
           </div>
         `}).join('')}
       </div>
+      <div style="margin-top:28px;padding:20px 24px;background:linear-gradient(135deg,rgba(0,240,255,0.08),rgba(162,155,254,0.08));border:1px solid rgba(0,240,255,0.15);border-radius:18px;text-align:center;max-width:500px;">
+        <div style="font-size:20px;margin-bottom:8px;">🚀</div>
+        <div style="font-size:16px;font-weight:800;color:var(--accent-cyan);margin-bottom:8px;">全集66集 · 覆盖全部中考词汇 · 持续更新中</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+          当前已上线 ${episodes.length} 集，每周持续更新<br>
+          动物城 · 三丽鸥 · Chiikawa · 原神 · 更多IP角色加入中<br>
+          <span style="color:var(--accent-yellow);font-weight:700;">3个月追完66集，轻松拿下中考英语词汇!</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;font-size:11px;color:var(--text-secondary);opacity:0.5;">
+        <img src="https://visitor-badge.laobi.icu/badge?page_id=bbfun.net&left_color=%231a1a2e&right_color=%236c5ce7&left_text=访问量" alt="visitors" style="height:18px;vertical-align:middle;">
+      </div>
     </div>
   `;
 }
@@ -5570,6 +5573,7 @@ function startEpisode(index) {
     sceneScores: {}, episodeScore: 0, episodeTotal: 0, wrongWords: []
   };
   renderCurrentStep();
+  showTutorial();
 }
 
 function showPaywall(index) {

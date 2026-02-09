@@ -79,7 +79,7 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   position: relative;
-  padding-bottom: 130px;
+  padding-bottom: 100px;
   overflow-y: auto;
 }
 
@@ -396,13 +396,28 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
   .word-card .word-en { font-size: 26px; }
   .welcome h1 { font-size: 28px; }
   .ep-card { width: 130px; padding: 14px 10px; }
-  .controls { gap: 4px 6px; padding: 8px 6px 14px; }
+  .controls {
+    gap: 0; padding: 0;
+    background: rgba(10,10,26,0.98);
+    flex-wrap: nowrap; justify-content: space-evenly;
+    height: 50px; border-top: 1px solid rgba(255,255,255,0.08);
+  }
   .controls .episode-select { display: none; }
-  .ctrl-btn { padding: 6px 10px; font-size: 13px; }
+  .ctrl-btn {
+    padding: 0; font-size: 18px; border: none; background: none;
+    border-radius: 0; flex: 1; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ctrl-btn:hover { background: rgba(255,255,255,0.06); box-shadow: none; }
+  .ctrl-btn.primary { background: none; padding: 0; }
+  .ctrl-btn.primary:hover { box-shadow: none; background: rgba(255,255,255,0.06); }
+  .ctrl-btn.lang-toggle { background: none; border: none; }
   .ctrl-btn .btn-label { display: none; }
-  .ctrl-btn .btn-icon { font-size: 16px; }
+  .ctrl-btn .btn-icon { font-size: 20px; }
+  .stage { padding-bottom: 70px; }
   .review-grid { grid-template-columns: 1fr; }
   .review-grid-ext { grid-template-columns: 1fr 1fr; }
+  .welcome-print-btns button { padding: 12px 20px; font-size: 15px; min-width: auto; }
 }
 
 /* === Quiz Card === */
@@ -836,6 +851,39 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
   box-shadow: 0 0 24px rgba(0,240,255,0.3);
 }
 
+/* === Print Preview Overlay (mobile) === */
+.print-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #fff; color: #1a1a2e; overflow-y: auto;
+  padding: 16px 12px 80px; font-family: 'Noto Sans SC', sans-serif;
+  display: none;
+}
+.print-overlay.show { display: block; }
+.print-overlay h1 { color: #1a1a2e; font-size: 20px; text-align: center; margin-bottom: 16px; }
+.print-overlay h2 {
+  font-size: 17px; margin: 16px 0 6px; padding-bottom: 4px;
+  border-bottom: 2px solid #6c5ce7; color: #6c5ce7;
+}
+.print-overlay h3 { font-size: 14px; margin: 10px 0 4px; color: #e17055; }
+.print-overlay .print-story { font-size: 14px; line-height: 1.9; margin-bottom: 12px; color: #2d3436; }
+.print-overlay .print-key { font-weight: 900; color: #0984e3; text-decoration: underline; }
+.print-overlay .print-ext { font-weight: 700; color: #e17055; font-style: italic; }
+.print-overlay .print-cn { font-size: 12px; color: #6c5ce7; }
+.print-overlay .print-cn-key { font-size: 12px; color: #00b894; }
+.print-overlay table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 12px; }
+.print-overlay th, .print-overlay td { border: 1px solid #ddd; padding: 4px 6px; text-align: left; }
+.print-overlay th { background: #6c5ce7; color: #fff; font-weight: 700; }
+.print-overlay .bilingual-en { color: #0984e3; margin-bottom: 2px; font-size: 14px; line-height: 1.8; }
+.print-overlay .bilingual-zh { color: #2d3436; margin-bottom: 10px; font-size: 14px; line-height: 1.8; }
+.print-overlay .dictation-line { font-size: 14px; line-height: 2.2; color: #2d3436; }
+.print-overlay-close {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  z-index: 10000; background: #6c5ce7; color: #fff; border: none;
+  border-radius: 24px; padding: 12px 40px; font-size: 16px; font-weight: 700;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(108,92,231,0.5);
+}
+@media print { .print-overlay { display: none !important; } }
+
 /* === Category Tag on Episode Cards === */
 .ep-category-tag {
   font-size: 10px; color: var(--accent-purple); background: rgba(162,155,254,0.12);
@@ -906,11 +954,13 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
   <button class="ctrl-btn primary" id="btnPlayPause"><span class="btn-icon">▶</span><span class="btn-label"> 自动播放</span></button>
   <button class="ctrl-btn" id="btnNext"><span class="btn-label">下一步 </span><span class="btn-icon">⏭</span></button>
   <button class="ctrl-btn narrate-btn" id="btnNarrate" title="双击重播"><span class="btn-icon">🎙</span><span class="btn-label"> 朗读</span></button>
-  <button class="ctrl-btn lang-toggle" id="btnLang">中/EN</button>
+  <button class="ctrl-btn lang-toggle" id="btnLang"><span class="btn-icon">🌐</span><span class="btn-label"> 中/EN</span></button>
   <button class="ctrl-btn hide-toggle" id="btnHideEn"><span class="btn-icon">👁</span><span class="btn-label"> 隐藏英文</span></button>
 </div>
 
 <div id="printZone"></div>
+<div class="print-overlay" id="printOverlay"></div>
+<button class="print-overlay-close" id="printOverlayClose" style="display:none;" onclick="closePrintOverlay()">✕ 关闭预览</button>
 
 <script>
 // ============================================================
@@ -5325,9 +5375,15 @@ function showWelcome() {
         <div class="search-results" id="searchResults"></div>
       </div>
       <div class="welcome-print-btns">
+        ${getUnlockData().unlocked ? `
         <button onclick="printAllStories()">🖨️ 打印全部文章</button>
         <button onclick="printBilingualStories()">🌐 打印中英双语</button>
         <button onclick="printVocabList()">📋 打印词汇表</button>
+        ` : `
+        <button onclick="showPaywall(FREE_EPISODES)" style="opacity:0.5;">🔒 打印全部文章</button>
+        <button onclick="showPaywall(FREE_EPISODES)" style="opacity:0.5;">🔒 打印中英双语</button>
+        <button onclick="showPaywall(FREE_EPISODES)" style="opacity:0.5;">🔒 打印词汇表</button>
+        `}
       </div>
       <div class="review-entry-cards">
         <div class="review-entry-card${dueCount === 0 ? ' disabled' : ''}" onclick="${dueCount > 0 ? 'startReviewMode(\'due\')' : ''}">
@@ -6558,9 +6614,39 @@ function renderPartsToPlainText(parts) {
   }).join('');
 }
 
+function isMobile() {
+  return /Android|iPhone|iPad|iPod|MicroMessenger/i.test(navigator.userAgent) || window.innerWidth <= 600;
+}
+
+function showPrintContent(html) {
+  if (isMobile()) {
+    const overlay = document.getElementById('printOverlay');
+    const closeBtn = document.getElementById('printOverlayClose');
+    overlay.innerHTML = html;
+    overlay.classList.add('show');
+    closeBtn.style.display = 'block';
+  } else {
+    const zone = document.getElementById('printZone');
+    zone.innerHTML = html;
+    zone.style.display = 'block';
+    setTimeout(() => {
+      window.print();
+      zone.style.display = 'none';
+      zone.innerHTML = '';
+    }, 100);
+  }
+}
+
+function closePrintOverlay() {
+  const overlay = document.getElementById('printOverlay');
+  const closeBtn = document.getElementById('printOverlayClose');
+  overlay.classList.remove('show');
+  overlay.innerHTML = '';
+  closeBtn.style.display = 'none';
+}
+
 function printAllStories() {
-  const zone = document.getElementById('printZone');
-  let html = '<h1 style="text-align:center;font-size:24px;margin-bottom:20px;">中考单词趣味记忆 — 全部文章（中文版）</h1>';
+  let html = '<h1>中考单词趣味记忆 — 全部文章（中文版）</h1>';
   episodes.forEach((ep, i) => {
     html += `<div class="print-episode">`;
     html += `<h2>${ep.emoji} 第${ep.id}集：${ep.title}（${ep.category}）</h2>`;
@@ -6571,24 +6657,16 @@ function printAllStories() {
     });
     html += `</div>`;
   });
-  zone.innerHTML = html;
-  zone.style.display = 'block';
-  setTimeout(() => {
-    window.print();
-    zone.style.display = 'none';
-    zone.innerHTML = '';
-  }, 100);
+  showPrintContent(html);
 }
 
 function printBilingualStories() {
-  const zone = document.getElementById('printZone');
-  let html = '<h1 style="text-align:center;font-size:24px;margin-bottom:20px;">中考单词趣味记忆 — 中英双语文章</h1>';
+  let html = '<h1>中考单词趣味记忆 — 中英双语文章</h1>';
   episodes.forEach((ep, i) => {
     html += `<div class="print-episode">`;
     html += `<h2>${ep.emoji} 第${ep.id}集：${ep.title}（${ep.category}）</h2>`;
     ep.scenes.forEach((sc, si) => {
       html += `<h3>${sc.label}</h3>`;
-      // Split by paragraphs and interleave EN/ZH
       const enText = sc.storyEn || sc.story;
       const zhText = sc.story;
       const enParas = enText.split(/\n\n+/);
@@ -6609,18 +6687,11 @@ function printBilingualStories() {
     });
     html += `</div>`;
   });
-  zone.innerHTML = html;
-  zone.style.display = 'block';
-  setTimeout(() => {
-    window.print();
-    zone.style.display = 'none';
-    zone.innerHTML = '';
-  }, 100);
+  showPrintContent(html);
 }
 
 function printVocabList() {
-  const zone = document.getElementById('printZone');
-  let html = '<h1 style="text-align:center;font-size:24px;margin-bottom:20px;">中考单词趣味记忆 — 词汇表</h1>';
+  let html = '<h1>中考单词趣味记忆 — 词汇表</h1>';
   // Core words table with numbering
   html += '<h2>一、核心词汇</h2>';
   html += '<table><thead><tr><th style="width:36px">序号</th><th>集数</th><th>单词</th><th>音标</th><th>释义</th></tr></thead><tbody>';
@@ -6670,13 +6741,7 @@ function printVocabList() {
     });
   });
   html += '</div>';
-  zone.innerHTML = html;
-  zone.style.display = 'block';
-  setTimeout(() => {
-    window.print();
-    zone.style.display = 'none';
-    zone.innerHTML = '';
-  }, 100);
+  showPrintContent(html);
 }
 
 // ============================================================

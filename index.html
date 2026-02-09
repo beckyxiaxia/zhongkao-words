@@ -307,6 +307,7 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
 }
 .ctrl-btn:hover { background: rgba(255,255,255,0.14); border-color: var(--accent-cyan); box-shadow: var(--glow-cyan); }
 .ctrl-btn:active { transform: scale(0.96); }
+.ctrl-btn .btn-short { display: none; }
 .ctrl-btn.primary {
   background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
   border: none; font-weight: 700; padding: 8px 22px;
@@ -404,16 +405,18 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
   }
   .controls .episode-select { display: none; }
   .ctrl-btn {
-    padding: 0; font-size: 18px; border: none; background: none;
+    padding: 0; font-size: 13px; border: none; background: none;
     border-radius: 0; flex: 1; height: 100%;
     display: flex; align-items: center; justify-content: center;
+    font-weight: 700; letter-spacing: 0.5px;
   }
   .ctrl-btn:hover { background: rgba(255,255,255,0.06); box-shadow: none; }
   .ctrl-btn.primary { background: none; padding: 0; }
   .ctrl-btn.primary:hover { box-shadow: none; background: rgba(255,255,255,0.06); }
   .ctrl-btn.lang-toggle { background: none; border: none; }
   .ctrl-btn .btn-label { display: none; }
-  .ctrl-btn .btn-icon { font-size: 20px; }
+  .ctrl-btn .btn-icon { display: none; }
+  .ctrl-btn .btn-short { display: inline; }
   .stage { padding-bottom: 70px; }
   .review-grid { grid-template-columns: 1fr; }
   .review-grid-ext { grid-template-columns: 1fr 1fr; }
@@ -998,13 +1001,11 @@ body.welcome-mode .stage { min-height: auto; justify-content: flex-start; paddin
 
 <div class="controls" id="controls">
   <select class="episode-select" id="episodeSelect"></select>
-  <button class="ctrl-btn" id="btnPrev"><span class="btn-icon">⏮</span><span class="btn-label"> 上一步</span></button>
-  <!-- auto-play removed -->
-
-  <button class="ctrl-btn" id="btnNext"><span class="btn-label">下一步 </span><span class="btn-icon">⏭</span></button>
-  <button class="ctrl-btn narrate-btn" id="btnNarrate" title="双击重播"><span class="btn-icon">🎙</span><span class="btn-label"> 朗读</span></button>
-  <button class="ctrl-btn lang-toggle" id="btnLang"><span class="btn-icon">🌐</span><span class="btn-label"> 中/EN</span></button>
-  <button class="ctrl-btn hide-toggle" id="btnHideEn"><span class="btn-icon">👁</span><span class="btn-label"> 隐藏英文</span></button>
+  <button class="ctrl-btn" id="btnPrev"><span class="btn-icon">⏮</span><span class="btn-label"> 上一步</span><span class="btn-short">上一步</span></button>
+  <button class="ctrl-btn" id="btnNext"><span class="btn-label">下一步 </span><span class="btn-icon">⏭</span><span class="btn-short">下一步</span></button>
+  <button class="ctrl-btn narrate-btn" id="btnNarrate" title="双击重播"><span class="btn-icon">🎙</span><span class="btn-label"> 朗读</span><span class="btn-short">朗读</span></button>
+  <button class="ctrl-btn lang-toggle" id="btnLang"><span class="btn-icon">🌐</span><span class="btn-label"> 中/EN</span><span class="btn-short" id="btnLangShort">英文版</span></button>
+  <button class="ctrl-btn hide-toggle" id="btnHideEn"><span class="btn-icon">👁</span><span class="btn-label"> 隐藏英文</span><span class="btn-short" id="btnHideShort">隐藏</span></button>
 </div>
 
 <div class="toast-msg" id="toastMsg"></div>
@@ -5263,7 +5264,7 @@ function init() {
   hideEnMode = savedData.preferences.hideEn || false;
   if (hideEnMode) {
     btnHideEn.classList.add('active');
-    btnHideEn.innerHTML = '<span class="btn-icon">👁</span><span class="btn-label"> 显示英文</span>';
+    btnHideEn.innerHTML = '<span class="btn-icon">👁</span><span class="btn-label"> 显示英文</span><span class="btn-short">显示</span>';
   }
   showWelcome();
   bindEvents();
@@ -5393,6 +5394,8 @@ function toggleLang() {
 
 function updateLangBadge() {
   langBadge.textContent = currentLang === 'zh' ? '中文版' : 'English';
+  const shortEl = document.getElementById('btnLangShort');
+  if (shortEl) shortEl.textContent = currentLang === 'zh' ? '英文版' : '中文版';
 }
 
 // ============================================================
@@ -5838,7 +5841,7 @@ function handleWordClick(span, text, wordData) {
 function toggleHideEn() {
   hideEnMode = !hideEnMode;
   btnHideEn.classList.toggle('active', hideEnMode);
-  btnHideEn.innerHTML = hideEnMode ? '<span class="btn-icon">👁</span><span class="btn-label"> 显示英文</span>' : '<span class="btn-icon">👁</span><span class="btn-label"> 隐藏英文</span>';
+  btnHideEn.innerHTML = hideEnMode ? '<span class="btn-icon">👁</span><span class="btn-label"> 显示英文</span><span class="btn-short">显示</span>' : '<span class="btn-icon">👁</span><span class="btn-label"> 隐藏英文</span><span class="btn-short">隐藏</span>';
   savePreferences(currentLang, hideEnMode);
   // Apply to current scene card if exists
   const sceneCard = stage.querySelector('.scene-card');
@@ -6669,13 +6672,13 @@ function toggleNarration() {
 function updateNarrateButton() {
   btnNarrate.classList.remove('playing', 'paused');
   if (narratorState.playing && !narratorState.paused) {
-    btnNarrate.innerHTML = '<span class="btn-icon">🎙</span><span class="btn-label"> 暂停</span>';
+    btnNarrate.innerHTML = '<span class="btn-icon">🎙</span><span class="btn-label"> 暂停</span><span class="btn-short">暂停</span>';
     btnNarrate.classList.add('playing');
   } else if (narratorState.playing && narratorState.paused) {
-    btnNarrate.innerHTML = '<span class="btn-icon">🎙</span><span class="btn-label"> 继续</span>';
+    btnNarrate.innerHTML = '<span class="btn-icon">🎙</span><span class="btn-label"> 继续</span><span class="btn-short">继续</span>';
     btnNarrate.classList.add('paused');
   } else {
-    btnNarrate.innerHTML = '<span class="btn-icon">🎙</span><span class="btn-label"> 朗读</span>';
+    btnNarrate.innerHTML = '<span class="btn-icon">🎙</span><span class="btn-label"> 朗读</span><span class="btn-short">朗读</span>';
   }
 }
 
